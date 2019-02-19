@@ -18,6 +18,7 @@ using System;
 using System.IO;
 using System.Xml;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 using System.Collections.Generic;
 
@@ -73,11 +74,11 @@ namespace APITool
                 {
                     if (childNode.Name == "privilege")
                     {
-                        privileges.Add(childNode.InnerText.Trim());
+                        privileges.AddRange(Regex.Split(childNode.InnerText.Trim(), @"\s+"));
                     }
                     else if (childNode.Name == "feature")
                     {
-                        features.Add(childNode.InnerText.Trim());
+                        features.AddRange(Regex.Split(childNode.InnerText.Trim(), @"\s+"));
                     }
                     else if (childNode.Name == "since_tizen")
                     {
