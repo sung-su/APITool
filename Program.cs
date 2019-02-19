@@ -24,7 +24,7 @@ namespace APITool
 {
     class Program
     {
-        public int RunListAndReturnExitCode(ListOptions options)
+        public int RunPrintAndReturnExitCode(PrintOptions options)
         {
             if (options.Verbose)
             {
@@ -114,8 +114,8 @@ namespace APITool
             try
             {
                 Program program = new Program();
-                return Parser.Default.ParseArguments<ListOptions, DummyOptions>(args).MapResult(
-                        (ListOptions opts) => program.RunListAndReturnExitCode(opts),
+                return Parser.Default.ParseArguments<PrintOptions, DummyOptions>(args).MapResult(
+                        (PrintOptions opts) => program.RunPrintAndReturnExitCode(opts),
                         (DummyOptions opts) => program.RunDummyAndReturnExitCode(opts),
                         errs => 1);
             }

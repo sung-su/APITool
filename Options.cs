@@ -18,8 +18,8 @@ using CommandLine;
 
 namespace APITool
 {
-    [Verb("list", HelpText = "Show public exposed API list.")]
-    public class ListOptions
+    [Verb("print", HelpText = "Print public exposed APIs.")]
+    public class PrintOptions
     {
         [Option('v', "verbose", Default = false, HelpText = "Print verbose messages.")]
         public bool Verbose { get; set; }
@@ -44,6 +44,9 @@ namespace APITool
 
         [Option('o', "output", Required=false, HelpText = "Output file path")]
         public string OutputFile {get; set;}
+
+        [Option("format", Required=false, Default = "DocIds", HelpText = "Output format (DocIds, CSV)")]
+        public string OutputFormat {get; set;}
 
         [Value(0, MetaName = "target", Required = true, HelpText = "Target assembly or directory")]
         public string Target { get; set; }

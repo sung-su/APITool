@@ -23,104 +23,167 @@ namespace APITool
 {
     public class APIPrinter : AssemblyProcessor
     {
-        ListOptions _options;
-        bool _isPrintAll;
+        readonly PrintOptions _options;
+        readonly bool _isPrintAll;
+        readonly StreamWriter _writer;
+        readonly IMemberFormatter _formatter;
 
-        StreamWriter _writer;
-
-        public APIPrinter(ListOptions options)
+        public APIPrinter(PrintOptions options)
         {
             _options = options;
             _isPrintAll = !(options.PrintTypes | options.PrintFields | options.PrintProperties | options.PrintEvents | options.PrintMethods);
 
-            if (!string.IsNullOrEmpty(options.OutputFile)) {
+            if (!string.IsNullOrEmpty(options.OutputFile))
+            {
                 _writer = new StreamWriter(options.OutputFile);
-            } else {
+            }
+            else
+            {
                 _writer = new StreamWriter(Console.OpenStandardOutput());
+            }
+
+            if (_options.OutputFormat.Equals("CSV"))
+            {
+                _formatter = new CSVFormatter();
+            }
+            else
+            {
+                _formatter = new XmlDocIdsFormatter();
             }
         }
 
         public void Run(string filepath)
         {
+            _formatter.Prepare(filepath);
+            
             var asm = AssemblyDefinition.ReadAssembly(filepath);
             ProcessAssembly(asm);
         }
 
         protected override void ProcessType(TypeDefinition typeDef)
         {
-            if (typeDef.IsPublic)
+            // Only print public and nested public types.
+            if (!typeDef.IsPublic && !typeDef.IsNestedPublic)
             {
-                bool isHidden = IsHidden(typeDef.CustomAttributes);
-                if (_options.PrintHiddens || !isHidden)
+                return;
+            }
+
+            bool isHidden = IsHidden(typeDef.CustomAttributes);
+            if (_options.PrintHiddens || !isHidden)
+            {
+                if (_isPrintAll || _options.PrintTypes)
                 {
-                    if (_isPrintAll || _options.PrintTypes)
-                    {
-                        _writer.WriteLine("T: {0}{1}{2}",
-                            isHidden ? "*hidden* " : string.Empty,
-                            typeDef.FullName,
-                            typeDef.BaseType != null ? " : " + typeDef.BaseType.FullName : string.Empty);
-                        _writer.Flush();
-                    }
-                    base.ProcessType(typeDef);
+                    _writer.WriteLine(_formatter.Format(typeDef, isHidden));
+                    _writer.Flush();
                 }
+                base.ProcessType(typeDef);
             }
         }
 
         protected override void ProcessField(FieldDefinition fieldDef)
         {
-            if (fieldDef.IsPublic)
+            // Only print public and protected fields.
+            if (!fieldDef.IsPublic && !fieldDef.IsFamily)
             {
-                bool isHidden = IsHidden(fieldDef.CustomAttributes);
-                if ((_isPrintAll || _options.PrintFields) && (_options.PrintHiddens || !isHidden))
-                {
-                    _writer.WriteLine("F: {0}{1}{2}{3}",
-                        isHidden ? "*hidden* " : string.Empty,
-                        fieldDef.IsStatic ? "static " : string.Empty,
-                        fieldDef.FullName,
-                        fieldDef.HasConstant ? " = " + fieldDef.Constant : string.Empty);
-                    _writer.Flush();
-                }
+                return;
+            }
+
+            // Don't print specialname
+            if (fieldDef.IsSpecialName)
+            {
+                return;
+            }
+
+            bool isHidden = IsHidden(fieldDef.CustomAttributes);
+            if ((_isPrintAll || _options.PrintFields) && (_options.PrintHiddens || !isHidden))
+            {
+                _writer.WriteLine(_formatter.Format(fieldDef, isHidden));
+                _writer.Flush();
             }
         }
 
         protected override void ProcessProperty(PropertyDefinition propDef)
         {
+            bool isPublicOrFamaily = false;
+            if (propDef.GetMethod != null)
+            {
+                isPublicOrFamaily = propDef.GetMethod.IsPublic || propDef.GetMethod.IsFamily;
+            }
+            if (propDef.SetMethod != null)
+            {
+                isPublicOrFamaily |= propDef.SetMethod.IsPublic || propDef.SetMethod.IsFamily;
+            }
+
+            // Only print public and protected members.
+            if (!isPublicOrFamaily)
+            {
+                return;
+            }
+
             bool isHidden = IsHidden(propDef.CustomAttributes);
             if ((_isPrintAll || _options.PrintProperties) && (_options.PrintHiddens || !isHidden))
             {
-                _writer.WriteLine("P: {0}{1} {{ {2}{3} }}",
-                    isHidden ? "*hidden* " : string.Empty,
-                    propDef.FullName,
-                    propDef.GetMethod != null ? "get;" : string.Empty,
-                    propDef.SetMethod != null ? " set;" : string.Empty);
+                _writer.WriteLine(_formatter.Format(propDef, isHidden));
                 _writer.Flush();
             }
         }
 
         protected override void ProcessEvent(EventDefinition eventDef)
         {
+            bool isPublicOrFamaily = false;
+            if (eventDef.AddMethod != null)
+            {
+                isPublicOrFamaily = eventDef.AddMethod.IsPublic || eventDef.AddMethod.IsFamily;
+            }
+            if (eventDef.RemoveMethod != null)
+            {
+                isPublicOrFamaily |= eventDef.RemoveMethod.IsPublic || eventDef.RemoveMethod.IsFamily;
+            }
+
+            // Only print public and protected members.
+            if (!isPublicOrFamaily)
+            {
+                return;
+            }
+            //Console.WriteLine("E:{0} {1} {2} {3}", eventDef.Name, eventDef.IsDefinition, eventDef.IsSpecialName, eventDef.DeclaringType.IsPublic);
+
             bool isHidden = IsHidden(eventDef.CustomAttributes);
             if ((_isPrintAll || _options.PrintEvents) && (_options.PrintHiddens || !isHidden))
             {
-                _writer.WriteLine("E: {0}{1}",
-                    isHidden ? "*hidden* " : string.Empty,
-                    eventDef.FullName);
+                _writer.WriteLine(_formatter.Format(eventDef, isHidden));
                 _writer.Flush();
             }
         }
 
         protected override void ProcessMethod(MethodDefinition methodDef)
         {
-            if (methodDef.IsPublic && !methodDef.IsGetter && !methodDef.IsSetter && !methodDef.IsAddOn && !methodDef.IsRemoveOn)
+            bool isExplicitImpl = false;
+            foreach (var ot in methodDef.Overrides)
             {
-                bool isHidden = IsHidden(methodDef.CustomAttributes);
-                if ((_isPrintAll || _options.PrintMethods) && (_options.PrintHiddens || !isHidden))
+                if (ot.DeclaringType.Resolve().IsInterface)
                 {
-                    _writer.WriteLine("M: {0}{1}",
-                        isHidden ? "*hidden* " : string.Empty,
-                        methodDef.FullName);
-                    _writer.Flush();
+                    isExplicitImpl = true;
+                    break;
                 }
+            }
+
+            // Only print public / protected and explicit interface methods.
+            if (!methodDef.IsPublic && !methodDef.IsFamily && !isExplicitImpl)
+            {
+                return;
+            }
+
+            // Don't print event's add/remove and property's getter/setter methods.
+            if (methodDef.IsAddOn || methodDef.IsRemoveOn || methodDef.IsGetter || methodDef.IsSetter)
+            {
+                return;
+            }
+
+            bool isHidden = IsHidden(methodDef.CustomAttributes);
+            if ((_isPrintAll || _options.PrintMethods) && (_options.PrintHiddens || !isHidden))
+            {
+                _writer.WriteLine(_formatter.Format(methodDef, isHidden));
+                _writer.Flush();
             }
         }
 
