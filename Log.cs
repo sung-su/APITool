@@ -28,7 +28,7 @@ namespace APITool
         VERBOSE
     }
 
-    public class Log
+    public static class Log
     {
         public static LogLevel Level { get; set; } = LogLevel.INFO;
 

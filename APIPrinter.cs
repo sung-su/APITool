@@ -21,7 +21,7 @@ using Mono.Cecil;
 
 namespace APITool
 {
-    public class APIPrinter : AssemblyProcessor
+    public class APIPrinter : AssemblyProcessor, IDisposable
     {
         readonly PrintOptions _options;
         readonly bool _isPrintAll;
@@ -214,6 +214,34 @@ namespace APITool
             }
             return ret;
         }
+
+        #region IDisposable Support
+        private bool disposedValue = false; // To detect redundant calls
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    _writer.Dispose();
+                }
+
+                disposedValue = true;
+            }
+        }
+
+        ~APIPrinter() {
+           Dispose(false);
+        }
+
+        // This code added to correctly implement the disposable pattern.
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
 
     }
 }

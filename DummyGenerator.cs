@@ -97,7 +97,7 @@ namespace APITool
             }
         }
 
-        private bool ReplaceWithThrowPNSE(MethodDefinition method)
+        bool ReplaceWithThrowPNSE(MethodDefinition method)
         {
             if (method.HasBody && method.IsIL)
             {
@@ -118,7 +118,7 @@ namespace APITool
             return false;
         }
 
-        private void ReplaceWithVoidReturn(MethodDefinition method)
+        void ReplaceWithVoidReturn(MethodDefinition method)
         {
             if (method.HasBody && method.IsIL)
             {
@@ -132,7 +132,7 @@ namespace APITool
             }
         }
 
-        private void ClearMethodBody(MethodDefinition method)
+        void ClearMethodBody(MethodDefinition method)
         {
             var processor = method.Body.GetILProcessor();
             while (method.Body.Instructions.Count > 0)
@@ -141,7 +141,7 @@ namespace APITool
             }
         }
 
-        private void PrintMethodBody(MethodDefinition method)
+        void PrintMethodBody(MethodDefinition method)
         {
             if (method.HasBody)
             {
