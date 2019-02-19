@@ -55,7 +55,7 @@ namespace APITool
         public void Run(string filepath)
         {
             _formatter.Prepare(filepath);
-            
+
             var asm = AssemblyDefinition.ReadAssembly(filepath);
             ProcessAssembly(asm);
         }
@@ -68,7 +68,7 @@ namespace APITool
                 return;
             }
 
-            bool isHidden = IsHidden(typeDef.CustomAttributes);
+            bool isHidden = IsHidden(typeDef);
             if (_options.PrintHiddens || !isHidden)
             {
                 if (_isPrintAll || _options.PrintTypes)
@@ -94,7 +94,7 @@ namespace APITool
                 return;
             }
 
-            bool isHidden = IsHidden(fieldDef.CustomAttributes);
+            bool isHidden = IsHidden(fieldDef);
             if ((_isPrintAll || _options.PrintFields) && (_options.PrintHiddens || !isHidden))
             {
                 _writer.WriteLine(_formatter.Format(fieldDef, isHidden));
@@ -120,7 +120,7 @@ namespace APITool
                 return;
             }
 
-            bool isHidden = IsHidden(propDef.CustomAttributes);
+            bool isHidden = IsHidden(propDef);
             if ((_isPrintAll || _options.PrintProperties) && (_options.PrintHiddens || !isHidden))
             {
                 _writer.WriteLine(_formatter.Format(propDef, isHidden));
@@ -145,9 +145,8 @@ namespace APITool
             {
                 return;
             }
-            //Console.WriteLine("E:{0} {1} {2} {3}", eventDef.Name, eventDef.IsDefinition, eventDef.IsSpecialName, eventDef.DeclaringType.IsPublic);
 
-            bool isHidden = IsHidden(eventDef.CustomAttributes);
+            bool isHidden = IsHidden(eventDef);
             if ((_isPrintAll || _options.PrintEvents) && (_options.PrintHiddens || !isHidden))
             {
                 _writer.WriteLine(_formatter.Format(eventDef, isHidden));
@@ -160,7 +159,7 @@ namespace APITool
             bool isExplicitImpl = false;
             foreach (var ot in methodDef.Overrides)
             {
-                if (ot.DeclaringType.Resolve().IsInterface)
+                if (methodDef.Name.StartsWith(ot.DeclaringType.FullName))
                 {
                     isExplicitImpl = true;
                     break;
@@ -179,7 +178,7 @@ namespace APITool
                 return;
             }
 
-            bool isHidden = IsHidden(methodDef.CustomAttributes);
+            bool isHidden = IsHidden(methodDef);
             if ((_isPrintAll || _options.PrintMethods) && (_options.PrintHiddens || !isHidden))
             {
                 _writer.WriteLine(_formatter.Format(methodDef, isHidden));
@@ -187,7 +186,22 @@ namespace APITool
             }
         }
 
-        bool IsHidden(Mono.Collections.Generic.Collection<CustomAttribute> attrs)
+        bool IsHidden(IMemberDefinition member)
+        {
+            if (IsHiddenInCustomAttributes(member.CustomAttributes))
+            {
+                return true;
+            }
+
+            var declType = member.DeclaringType;
+            if (declType != null)
+            {
+                return IsHidden(declType);
+            }
+            return false;
+        }
+
+        bool IsHiddenInCustomAttributes(Mono.Collections.Generic.Collection<CustomAttribute> attrs)
         {
             bool ret = false;
             var attr = attrs.FirstOrDefault(a => a.AttributeType.FullName == "System.ComponentModel.EditorBrowsableAttribute");
