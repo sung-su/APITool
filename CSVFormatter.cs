@@ -28,7 +28,7 @@ using Mono.Cecil.Rocks;
 namespace APITool
 {
     // CSV format
-    // Type, DocId, ReturnType or BaseType, Const Value, IsStatic, IsHidden, SinceTizen, Privileges, Features
+    // Type, DocId, ReturnType or BaseType, DeclaringType, Const Value, IsStatic, IsHidden, SinceTizen, Privileges, Features
     public class CSVFormatter : IMemberFormatter
     {
         Dictionary<string, XmlNode> _xmlNodes = new Dictionary<string, XmlNode>();
@@ -58,6 +58,7 @@ namespace APITool
         {
             string xmlDocId = DocCommentId.GetDocCommentId(member);
             string refType = string.Empty;
+            string declType = string.Empty;
             string constValue = string.Empty;
             string strPrivileges = string.Empty;
             string strFeatures = string.Empty;
@@ -132,9 +133,10 @@ namespace APITool
                 isStatic = fieldDef.IsStatic;
             }
 
-            return string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8}",
-                    xmlDocId[0], xmlDocId,
-                    refType, constValue,
+            declType = member.DeclaringType?.FullName;
+
+            return string.Format("\"{0}\",{1},{2},{3},{4},{5},{6},{7},{8}",
+                    xmlDocId, refType, declType, constValue,
                     isStatic ? "static" : string.Empty,
                     isHidden ? "hidden" : string.Empty,
                     sinceTizen, strPrivileges, strFeatures);
