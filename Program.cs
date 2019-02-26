@@ -38,14 +38,18 @@ namespace APITool
             {
                 DirectoryInfo targetDir = new DirectoryInfo(absTarget);
                 var targetFiles = targetDir.GetFiles("*.dll").OrderBy(f => f.Name);
+                printer.EmitBegin();
                 foreach (var file in targetFiles)
                 {
                     printer.Run(file.FullName);
                 }
+                printer.EmitEnd();
             }
             else if (File.Exists(absTarget))
             {
+                printer.EmitBegin();
                 printer.Run(absTarget);
+                printer.EmitEnd();
             }
             else
             {

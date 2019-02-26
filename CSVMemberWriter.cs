@@ -29,32 +29,16 @@ namespace APITool
 {
     // CSV format
     // Type, DocId, ReturnType or BaseType, DeclaringType, Const Value, IsStatic, IsHidden, SinceTizen, Privileges, Features
-    public class CSVFormatter : IMemberFormatter
+    public class CSVMemberWriter : DefaultMemberWriter
     {
-        Dictionary<string, XmlNode> _xmlNodes = new Dictionary<string, XmlNode>();
+        AssemblyDocument _asmDoc;
 
-        public void Prepare(string filepath)
+        public override void EmitAssemblyBegin(AssemblyDefinition def)
         {
-            string xmlpath = Path.ChangeExtension(filepath, "xml");
-            if (File.Exists(xmlpath))
-            {
-                var xmlDoc = new XmlDocument();
-                xmlDoc.Load(xmlpath);
-
-                foreach (XmlNode docNode in xmlDoc.DocumentElement.ChildNodes)
-                {
-                    foreach (XmlNode memberNode in docNode)
-                    {
-                        if (memberNode.Name == "member")
-                        {
-                            _xmlNodes[memberNode.Attributes["name"].Value] = memberNode;
-                        }
-                    }
-                }
-            }
+            _asmDoc = new AssemblyDocument(def);
         }
 
-        public string Format(IMemberDefinition member, bool isHidden)
+        public override void WriteLine(IMemberDefinition member, bool isHidden)
         {
             string xmlDocId = DocCommentId.GetDocCommentId(member);
             string refType = string.Empty;
@@ -65,8 +49,8 @@ namespace APITool
             string sinceTizen = string.Empty;
             bool isStatic = false;
 
-            XmlNode xmlNode = null;
-            if (_xmlNodes.TryGetValue(xmlDocId, out xmlNode))
+            XmlNode xmlNode = _asmDoc.GetMemberNode(xmlDocId);
+            if (xmlNode != null)
             {
                 List<string> privileges = new List<string>();
                 List<string> features = new List<string>();
@@ -135,12 +119,12 @@ namespace APITool
 
             declType = member.DeclaringType?.FullName;
 
-            return string.Format("\"{0}\",{1},{2},{3},{4},{5},{6},{7},{8}",
+            Writer.WriteLine(string.Format("\"{0}\",{1},{2},{3},{4},{5},{6},{7},{8}",
                     xmlDocId, refType, declType, constValue,
                     isStatic ? "static" : string.Empty,
                     isHidden ? "hidden" : string.Empty,
-                    sinceTizen, strPrivileges, strFeatures);
-
+                    sinceTizen, strPrivileges, strFeatures));
+            Writer.Flush();
         }
 
     }

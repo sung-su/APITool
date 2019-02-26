@@ -21,43 +21,52 @@ using Mono.Cecil;
 
 namespace APITool
 {
-    public class APIPrinter : AssemblyProcessor, IDisposable
+    public class APIPrinter : AssemblyProcessor
     {
         readonly PrintOptions _options;
         readonly bool _isPrintAll;
-        readonly StreamWriter _writer;
-        readonly IMemberFormatter _formatter;
+        readonly IMemberWriter _writer;
 
         public APIPrinter(PrintOptions options)
         {
             _options = options;
             _isPrintAll = !(options.PrintTypes | options.PrintFields | options.PrintProperties | options.PrintEvents | options.PrintMethods);
 
-            if (!string.IsNullOrEmpty(options.OutputFile))
+            if (_options.OutputFormat.ToLower().Equals("csv"))
             {
-                _writer = new StreamWriter(options.OutputFile);
+                _writer = new CSVMemberWriter();
+            }
+            else if (_options.OutputFormat.ToLower().Equals("json"))
+            {
+                _writer = new JsonMemberWriter(options.Category);
             }
             else
             {
-                _writer = new StreamWriter(Console.OpenStandardOutput());
+                _writer = new DefaultMemberWriter();
             }
 
-            if (_options.OutputFormat.Equals("CSV"))
+            if (!string.IsNullOrEmpty(options.OutputFile))
             {
-                _formatter = new CSVFormatter();
+                _writer.SetStreamWriter(new StreamWriter(options.OutputFile));
             }
-            else
-            {
-                _formatter = new XmlDocIdsFormatter();
-            }
+        }
+
+        public void EmitBegin()
+        {
+            _writer.EmitDocumentBegin();
+        }
+
+        public void EmitEnd()
+        {
+            _writer.EmitDocumentEnd();
         }
 
         public void Run(string filepath)
         {
-            _formatter.Prepare(filepath);
-
             var asm = AssemblyDefinition.ReadAssembly(filepath);
+            _writer.EmitAssemblyBegin(asm);
             ProcessAssembly(asm);
+            _writer.EmitAssemblyEnd(asm);
         }
 
         protected override void ProcessType(TypeDefinition typeDef)
@@ -73,8 +82,7 @@ namespace APITool
             {
                 if (_isPrintAll || _options.PrintTypes)
                 {
-                    _writer.WriteLine(_formatter.Format(typeDef, isHidden));
-                    _writer.Flush();
+                    _writer.WriteLine(typeDef, isHidden);
                 }
                 base.ProcessType(typeDef);
             }
@@ -97,8 +105,7 @@ namespace APITool
             bool isHidden = IsHidden(fieldDef);
             if ((_isPrintAll || _options.PrintFields) && (_options.PrintHiddens || !isHidden))
             {
-                _writer.WriteLine(_formatter.Format(fieldDef, isHidden));
-                _writer.Flush();
+                _writer.WriteLine(fieldDef, isHidden);
             }
         }
 
@@ -123,8 +130,7 @@ namespace APITool
             bool isHidden = IsHidden(propDef);
             if ((_isPrintAll || _options.PrintProperties) && (_options.PrintHiddens || !isHidden))
             {
-                _writer.WriteLine(_formatter.Format(propDef, isHidden));
-                _writer.Flush();
+                _writer.WriteLine(propDef, isHidden);
             }
         }
 
@@ -149,8 +155,7 @@ namespace APITool
             bool isHidden = IsHidden(eventDef);
             if ((_isPrintAll || _options.PrintEvents) && (_options.PrintHiddens || !isHidden))
             {
-                _writer.WriteLine(_formatter.Format(eventDef, isHidden));
-                _writer.Flush();
+                _writer.WriteLine(eventDef, isHidden);
             }
         }
 
@@ -181,8 +186,7 @@ namespace APITool
             bool isHidden = IsHidden(methodDef);
             if ((_isPrintAll || _options.PrintMethods) && (_options.PrintHiddens || !isHidden))
             {
-                _writer.WriteLine(_formatter.Format(methodDef, isHidden));
-                _writer.Flush();
+                _writer.WriteLine(methodDef, isHidden);
             }
         }
 
@@ -214,34 +218,5 @@ namespace APITool
             }
             return ret;
         }
-
-        #region IDisposable Support
-        private bool disposedValue = false; // To detect redundant calls
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    _writer.Dispose();
-                }
-
-                disposedValue = true;
-            }
-        }
-
-        ~APIPrinter() {
-           Dispose(false);
-        }
-
-        // This code added to correctly implement the disposable pattern.
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-        #endregion
-
     }
 }

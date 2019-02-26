@@ -42,11 +42,14 @@ namespace APITool
         [Option('h', "include-hidden", Default = false, HelpText = "Print hidden(internal API) entries.")]
         public bool PrintHiddens { get; set; }
 
-        [Option('o', "output", Required=false, HelpText = "Output file path")]
-        public string OutputFile {get; set;}
+        [Option('o', "output", Required = false, HelpText = "Output file path")]
+        public string OutputFile { get; set; }
 
-        [Option("format", Required=false, Default = "DocIds", HelpText = "Output format (DocIds, CSV)")]
-        public string OutputFormat {get; set;}
+        [Option("format", Required = false, Default = "DocIds", HelpText = "Output format (DocIds, CSV)")]
+        public string OutputFormat { get; set; }
+
+        [Option("category", Required = false, HelpText = "Category value to be output to Json")]
+        public string Category { get; set; }
 
         [Value(0, MetaName = "target", Required = true, HelpText = "Target assembly or directory")]
         public string Target { get; set; }
