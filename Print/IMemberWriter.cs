@@ -1,7 +1,7 @@
 using System.IO;
 using Mono.Cecil;
 
-namespace APITool
+namespace APITool.Print
 {
     public interface IMemberWriter
     {

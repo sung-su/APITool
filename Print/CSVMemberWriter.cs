@@ -25,7 +25,7 @@ using System.Collections.Generic;
 using Mono.Cecil;
 using Mono.Cecil.Rocks;
 
-namespace APITool
+namespace APITool.Print
 {
     // CSV format
     // Type, DocId, ReturnType or BaseType, DeclaringType, Const Value, IsStatic, IsHidden, SinceTizen, Privileges, Features

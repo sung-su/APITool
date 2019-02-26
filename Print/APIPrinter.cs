@@ -19,7 +19,7 @@ using System.IO;
 using System.Linq;
 using Mono.Cecil;
 
-namespace APITool
+namespace APITool.Print
 {
     public class APIPrinter : AssemblyProcessor
     {

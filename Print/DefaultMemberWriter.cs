@@ -19,7 +19,7 @@ using System.IO;
 using Mono.Cecil;
 using Mono.Cecil.Rocks;
 
-namespace APITool
+namespace APITool.Print
 {
     public class DefaultMemberWriter : IMemberWriter, IDisposable
     {
