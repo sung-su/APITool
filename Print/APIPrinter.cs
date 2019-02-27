@@ -38,7 +38,7 @@ namespace APITool.Print
             }
             else if (_options.OutputFormat.ToLower().Equals("json"))
             {
-                _writer = new JsonMemberWriter(options.Category);
+                _writer = new JsonMemberWriter();
             }
             else
             {

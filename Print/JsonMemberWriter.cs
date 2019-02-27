@@ -30,13 +30,7 @@ namespace APITool.Print
     public class JsonMemberWriter : DefaultMemberWriter
     {
         AssemblyDocument _asmDoc;
-        string _category;
         bool _isFirstMember;
-
-        public JsonMemberWriter(string category)
-        {
-            _category = category;
-        }
 
         public override void EmitDocumentBegin()
         {
@@ -71,6 +65,7 @@ namespace APITool.Print
             if (typeDef != null)
             {
                 baseType = typeDef.BaseType?.FullName;
+                declNamespace = typeDef.Namespace;
             }
 
             if (member.DeclaringType != null)
@@ -140,8 +135,8 @@ namespace APITool.Print
 
             Writer.WriteLine("  {");
             Writer.WriteLine("    \"DocId\": \"{0}\",", docId);
-            Writer.WriteLine("    \"Category\": \"{0}\",", _category);
-            Writer.WriteLine("    \"Definition\": {");
+            Writer.WriteLine("    \"Info\": {");
+            Writer.WriteLine("      \"Signature\": \"{0}\",", member.FullName);
             if (!string.IsNullOrEmpty(baseType))
                 Writer.WriteLine("      \"BaseType\": \"{0}\",", baseType);
             if (!string.IsNullOrEmpty(declType))
@@ -153,9 +148,7 @@ namespace APITool.Print
             if (!string.IsNullOrEmpty(constValue))
                 Writer.WriteLine("      \"Constant\": \"{0}\",", constValue);
             Writer.WriteLine("      \"IsStatic\": {0},", isStatic ? "true" : "false");
-            Writer.WriteLine("      \"IsHidden\": {0}", isHidden ? "true" : "false");
-            Writer.WriteLine("    },");
-            Writer.WriteLine("    \"Documentation\": {");
+            Writer.WriteLine("      \"IsHidden\": {0},", isHidden ? "true" : "false");
             if (string.IsNullOrEmpty(sinceTizen)) {
                 sinceTizen = "none";
             }
