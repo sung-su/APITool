@@ -149,6 +149,7 @@ namespace APITool.Print
                 Writer.WriteLine("      \"Constant\": \"{0}\",", constValue);
             Writer.WriteLine("      \"IsStatic\": {0},", isStatic ? "true" : "false");
             Writer.WriteLine("      \"IsHidden\": {0},", isHidden ? "true" : "false");
+            Writer.WriteLine("      \"IsObsolete\": {0},", IsObsoleteMember(member) ? "true" : "false");
             if (string.IsNullOrEmpty(sinceTizen)) {
                 sinceTizen = "none";
             }

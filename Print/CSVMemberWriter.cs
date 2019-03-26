@@ -119,10 +119,11 @@ namespace APITool.Print
 
             declType = member.DeclaringType?.FullName;
 
-            Writer.WriteLine(string.Format("\"{0}\",{1},{2},{3},{4},{5},{6},{7},{8}",
+            Writer.WriteLine(string.Format("\"{0}\",{1},{2},{3},{4},{5},{6},{7},{8},{9}",
                     xmlDocId, refType, declType, constValue,
                     isStatic ? "static" : string.Empty,
                     isHidden ? "hidden" : string.Empty,
+                    IsObsoleteMember(member) ? "obsolete" : string.Empty,
                     sinceTizen, strPrivileges, strFeatures));
             Writer.Flush();
         }

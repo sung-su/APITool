@@ -16,6 +16,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Rocks;
 
@@ -28,6 +29,11 @@ namespace APITool.Print
         public DefaultMemberWriter()
         {
             Writer = new StreamWriter(Console.OpenStandardOutput());
+        }
+
+        public static bool IsObsoleteMember(IMemberDefinition member) {
+            var attr = member.CustomAttributes.FirstOrDefault(a => a.AttributeType.FullName == "System.ObsoleteAttribute");
+            return attr != null;
         }
 
         public void SetStreamWriter(StreamWriter writer)
