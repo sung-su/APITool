@@ -21,6 +21,7 @@ using System.Text.RegularExpressions;
 using CommandLine;
 using APITool.Dummy;
 using APITool.Print;
+using APITool.Ref;
 
 namespace APITool
 {
@@ -34,7 +35,7 @@ namespace APITool
             }
 
             APIPrinter printer = new APIPrinter(options);
-            
+
             string absTarget = Path.GetFullPath(options.Target);
             if (Directory.Exists(absTarget))
             {
@@ -79,7 +80,7 @@ namespace APITool
             if (!string.IsNullOrEmpty(options.OutputPath))
             {
                 options.OutputPath = Path.GetFullPath(options.OutputPath);
-            }            
+            }
 
             if (Directory.Exists(options.InputPath))
             {
@@ -115,14 +116,41 @@ namespace APITool
             return 0;
         }
 
+        public int RunRefAndReturnExitCode(RefOptions options)
+        {
+            if (options.Verbose)
+            {
+                Log.Level = LogLevel.VERBOSE;
+            }
+
+            if (!string.IsNullOrEmpty(options.TargetAssembly))
+            {
+                options.TargetAssembly = Path.GetFullPath(options.TargetAssembly);
+            }
+
+            if (File.Exists(options.TargetAssembly))
+            {
+                var printer = new RefPrinter(options);
+                printer.PrintReferences(options.TargetAssembly);
+            }
+            else
+            {
+                Log.Error($"No such file found: {options.TargetAssembly}");
+                return 1;
+            }
+
+            return 0;
+        }
+
         static int Main(string[] args)
         {
             try
             {
                 Program program = new Program();
-                return Parser.Default.ParseArguments<PrintOptions, DummyOptions>(args).MapResult(
+                return Parser.Default.ParseArguments<PrintOptions, DummyOptions, RefOptions>(args).MapResult(
                         (PrintOptions opts) => program.RunPrintAndReturnExitCode(opts),
                         (DummyOptions opts) => program.RunDummyAndReturnExitCode(opts),
+                        (RefOptions opts) => program.RunRefAndReturnExitCode(opts),
                         errs => 1);
             }
             catch (Exception ex)

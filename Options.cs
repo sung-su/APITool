@@ -65,4 +65,17 @@ namespace APITool
         public string OutputPath { get; set; }
     }
 
+    [Verb("ref", HelpText = "Print assembly references")]
+    public class RefOptions
+    {
+        [Option('v', "verbose", Default = false, HelpText = "Print verbose messages.")]
+        public bool Verbose { get; set; }
+
+        [Option('n', "nameonly", Default = false, HelpText = "Print assembly name only.")]
+        public bool NameOnly { get; set; }
+
+        [Value(0, MetaName = "TargetAssembly", Required = true, HelpText = "Assembly to print references.")]
+        public string TargetAssembly { get; set; }
+    }
+
 }
